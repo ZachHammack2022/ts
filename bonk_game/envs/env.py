@@ -35,34 +35,37 @@ class BonkEnv(gym.Env):
         
         # Observations are dictionaries with the agent's and the target's location.
         # Each location is encoded as an element of {0, ..., `size`}^2, i.e. MultiDiscrete([size, size]).
-        self.observation_space = gym.spaces.Dict(
-            {
-                "agent": gym.spaces.Dict(
-                    {   
-                        "x" : gym.spaces.Box(low =0,high = 520, shape=(1,), dtype=np.float64),
-                        "y" : gym.spaces.Box(low =0,high = 420, shape=(1,), dtype=np.float64),
-                        "x_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-                        "y_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-                        "alive" : gym.spaces.Discrete(2)
+        # self.observation_space = gym.spaces.Dict(
+        #     {
+        #         "agent": gym.spaces.Dict(
+        #             {   
+        #                 "x" : gym.spaces.Box(low =0,high = 520, shape=(1,), dtype=np.float64),
+        #                 "y" : gym.spaces.Box(low =0,high = 420, shape=(1,), dtype=np.float64),
+        #                 "x_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
+        #                 "y_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
+        #                 "alive" : gym.spaces.Discrete(2)
                     
-                    }
-                    ),
-                "enemy": gym.spaces.Dict(
-                    {
-                        "x" : gym.spaces.Box(low =0,high = 520, shape=(1,), dtype=np.float64),
-                        "y" : gym.spaces.Box(low =0,high = 420, shape=(1,), dtype=np.float64),
-                        "x_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-                        "y_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-                        "alive" : gym.spaces.Discrete(2)
+        #             }
+        #             ),
+        #         "enemy": gym.spaces.Dict(
+        #             {
+        #                 "x" : gym.spaces.Box(low =0,high = 520, shape=(1,), dtype=np.float64),
+        #                 "y" : gym.spaces.Box(low =0,high = 420, shape=(1,), dtype=np.float64),
+        #                 "x_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
+        #                 "y_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
+        #                 "alive" : gym.spaces.Discrete(2)
                     
-                    }
-                )
-            }
-        )
+        #             }
+        #         )
+        #     }
+        # )
+        
+        self.observation_space = gym.spaces.Box(-1,1,shape = (10,))
         
         # We have 8 actions, corresponding to "right", "up", "left", "down", right up right down, left up left down
-        # should be int 0-7
-        self.action_space = gym.spaces.Discrete(8)
+        # should be int 0-7 (discrete)
+        #self.action_space = gym.spaces.Discrete(8)
+        self.action_space = gym.spaces.Box(0,8,shape = (1,),dtype=int)
         
         """
         The following dictionary maps abstract actions from `self.action_space` to
@@ -98,7 +101,11 @@ class BonkEnv(gym.Env):
         self.clock = None
         
     def _get_obs(self):
-        return {"agent": self._agent_obs, "enemy": self._enemy_obs}
+        return np.concatenate(self._agent_obs,self._enemy_obs)
+    
+    def normalize(self,low,high,val):
+        return (val - low)/(high-low)
+        
     
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
@@ -107,26 +114,20 @@ class BonkEnv(gym.Env):
         # Choose the agent's location uniformly at random
         #self._agent_location = self.np_random.integers(0, self.size, size=2, dtype=int)
         
-        self._agent_obs = {
-            "x": (121+ np.random.random()*(499-121)),
-            "y": 200.0,
-            "x_v" : 0.0,
-            "y_v" : 0.0,
-            "alive": 1
-            
-        }
-        self._enemy_obs = {
-            "x": (121+ np.random.random()*(499-121)),
-            "y": 200.0,
-            "x_v" : 0.0,
-            "y_v" : 0.0,
-            "alive": 1
-            
-        }
+        x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
+        y = self.normalize(135,520,200)
+        x_v,y_v = 0.0,0.0
+        alive = 1
+        self._agent_obs = np.array(x,y,x_v,y_v,alive)
+        x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
+        y = self.normalize(135,520,200)
+        x_v,y_v = 0.0,0.0
+        alive = 1
+        self._enemy_obs = np.array(x,y,x_v,y_v,alive)
 
         # We will sample the target's location randomly until it does not coincide with the agent's location
-        while abs(self._agent_obs["x"]-self._enemy_obs["x"])<25:
-            self._enemy_obs["x"] = (121+ np.random.random()*(499-121))
+        while abs(self._agent_obs[0]-self._enemy_obs[0])<25:
+            self._enemy_obs[0] = (121+ np.random.random()*(499-121))
             
 
         observation = self._get_obs()
@@ -153,16 +154,18 @@ class BonkEnv(gym.Env):
         self.p1.update(self.p2.opp_score)
         self.p2.update(self.p1.opp_score)
         
-        ## update observations before passing
-        self._agent_obs[0] = self.p1.x
-        self._agent_obs[1] = self.p1.y
-        self._agent_obs[2] = self.p1.x_v
-        self._agent_obs[3] = self.p1.y_v
         
-        self._enemy_obs[0] = self.p2.x
-        self._enemy_obs[1] = self.p2.y
-        self._enemy_obs[2] = self.p2.x_v
-        self._enemy_obs[3] = self.p2.y_v
+        
+        ## update observations before passing
+        self._agent_obs[0] = self.normalize(100,580,self.p1.x)
+        self._agent_obs[1] = self.normalize(135,520,self.p1.y)
+        self._agent_obs[2] = self.normalize(-15,15,self.p1.x_v)
+        self._agent_obs[3] = self.normalize(-15,15,self.p1.y_v)
+        
+        self._enemy_obs[0] = self.normalize(100,580,self.p2.x)
+        self._enemy_obs[1] = self.normalize(135,520,self.p2.y)
+        self._enemy_obs[2] = self.normalize(-15,15,self.p2.x_v)
+        self._enemy_obs[3] = self.normalize(-15,15,self.p2.y_v)
         
         
         # An episode is done if agent or enemy dies

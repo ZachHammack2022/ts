@@ -41,6 +41,17 @@ class player():
         g_constant = .4
         self.x_v += v_constant*self.x_a
         self.y_v += v_constant*self.y_a + g_constant
+        # prepare velocities for normalization
+        if self.x_v >15:
+            self.x_v = 15
+        if self.x_v <-15:
+            self.x_v = -15
+        if self.y_v >15:
+            self.y_v = 15
+        if self.y_v <-15:
+            self.y_v = -15
+            
+        
         self.x+= p_constant*self.x_v
         self.y += p_constant*self.y_v
         self.y = min(420-self.r,self.y)

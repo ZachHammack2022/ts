@@ -1,4 +1,4 @@
-from envs.control import game_loop
+from bonk_game.envs.control import game_loop
 """Runs control's main game loop."""
 
 def run_game():

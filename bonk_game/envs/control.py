@@ -1,9 +1,9 @@
 """ This file contains the main game loop."""
 import  pygame
 import random
-from envs.player import *
-from envs.platform import *
-from envs.mechanics import *
+from bonk_game.envs.player import *
+from bonk_game.envs.platform import *
+from bonk_game.envs.mechanics import *
 from pygame.locals import (
     K_UP,
     K_DOWN,
@@ -110,6 +110,7 @@ def game_loop(render):
         player_collision(p1, p2)
         p1.update(p2.opp_score)
         p2.update(p1.opp_score)
+        print(p1.x_v)
         
         if not (p1.alive and p2.alive) or (p1.score+p2.score ==10):
             window = False
