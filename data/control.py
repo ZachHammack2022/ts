@@ -80,7 +80,7 @@ def game_loop(render):
     left_wall = platform(80,100,115,435,wall_color,kill = True)
     right_wall = platform(580,600,115,435,wall_color,kill = True)
     ceiling = platform(100,580,115,135,ceiling_color,kill = False)
-    env = [floor,left_wall,right_wall,ceiling]
+    env_objects = [floor,left_wall,right_wall,ceiling]
     ## Key down Events
     #keydown handler
     # set window  (need to define event handlers for each input)
@@ -104,7 +104,7 @@ def game_loop(render):
         surface.fill(bg_color)
       
     # update players
-        for env_obj in env:
+        for env_obj in env_objects:
             env_collision(p1, env_obj)
             env_collision(p2, env_obj)
         player_collision(p1, p2)
@@ -115,7 +115,7 @@ def game_loop(render):
             window = False
                 
         # draw
-        draw(surface,env,False)
+        draw(surface,env_objects,False)
         draw(surface,players,True)
         # copy surface to screen
         screen.update()

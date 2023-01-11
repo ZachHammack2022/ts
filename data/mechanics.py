@@ -1,7 +1,7 @@
 """This file includes all physics based functions to direct gameplay."""
 import math
 
-def env_collision(circle, rect)->bool:
+def env_collision(circle, rect)->None:
     cx,cy,radius = circle.x,circle.y,circle.r
     rx,ry,rw,rh  = rect.x1,rect.y1,abs(rect.x2-rect.x1),abs(rect.y2-rect.y1)
     #temporary variables to set edges for testing
@@ -25,9 +25,7 @@ def env_collision(circle, rect)->bool:
 
     #// if the distance is less than the radius, collision!
     if (distance <= radius):
-        handle_env_collision(circle,rect); # circle is user
- 
-    return False
+        handle_env_collision(circle,rect);
 
 def handle_env_collision(user,rect)->None:
     if rect.kill:
@@ -87,6 +85,8 @@ def update(self,keystrokes)->None:
     self.y_v += v_constant*self.y_a
     self.x_p+= p_constant*self.x_v
     self.y_p += p_constant*self.y_v
+    
+
     
 
    

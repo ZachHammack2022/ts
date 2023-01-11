@@ -25,6 +25,12 @@ class player():
         self.sx = x
         self.opp_score = 0
         self.score = 0
+        self._obs_space = {
+            "x": self.x,
+            "y": self.y,
+            "x_v": self.x_v,
+            "y_v" : self.y_v
+        }
        
     def update(self,score)-> None:
         """_Update velocity and position values
