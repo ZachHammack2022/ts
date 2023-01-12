@@ -110,7 +110,7 @@ def game_loop(render):
         player_collision(p1, p2)
         p1.update(p2.opp_score)
         p2.update(p1.opp_score)
-        print(p1.x_v)
+
         
         if not (p1.alive and p2.alive) or (p1.score+p2.score ==10):
             window = False

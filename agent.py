@@ -1,18 +1,20 @@
 import bonk_game
-import gymnasium as gym
-from gymnasium.wrappers import FlattenObservation
+# gymnasium as gym
+import gym
+# #from gymnasium.wrappers import FlattenObservation
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
 
 
-import gymnasium as gym
+# #import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.env_checker import check_env
 
 # Parallel environments
 env = gym.make('bonk_game/bonk-v0')
+print("done")
 check_env(env)
 
 # model = PPO('MlpPolicy', env, verbose=1)

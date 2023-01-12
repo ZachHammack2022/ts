@@ -1,6 +1,7 @@
 import numpy as np 
 import cv2 
-import gymnasium as gym
+#import gymnasium as gym
+import gym
 import matplotlib.pyplot as plt
 from gym import Env, spaces
 import time
@@ -60,12 +61,12 @@ class BonkEnv(gym.Env):
         #     }
         # )
         
-        self.observation_space = gym.spaces.Box(-1,1,shape = (10,))
+        self.observation_space = gym.spaces.Box(-1,1,shape = (10,),dtype = np.float64)
         
         # We have 8 actions, corresponding to "right", "up", "left", "down", right up right down, left up left down
         # should be int 0-7 (discrete)
-        #self.action_space = gym.spaces.Discrete(8)
-        self.action_space = gym.spaces.Box(0,8,shape = (1,),dtype=int)
+        #self.action_space = 
+        self.action_space = gym.spaces.Discrete(8)
         
         """
         The following dictionary maps abstract actions from `self.action_space` to
@@ -101,15 +102,16 @@ class BonkEnv(gym.Env):
         self.clock = None
         
     def _get_obs(self):
-        return np.concatenate(self._agent_obs,self._enemy_obs)
+        return np.concatenate((self._agent_obs,self._enemy_obs),axis = 0)
     
     def normalize(self,low,high,val):
         return (val - low)/(high-low)
         
     
-    def reset(self, seed=None, options=None):
+    def reset(self,  seed1 = None, options=None):
         # We need the following line to seed self.np_random
-        super().reset(seed=seed)
+        #seed=seed1
+        #super().reset(seed = seed1)
 
         # Choose the agent's location uniformly at random
         #self._agent_location = self.np_random.integers(0, self.size, size=2, dtype=int)
@@ -118,12 +120,16 @@ class BonkEnv(gym.Env):
         y = self.normalize(135,520,200)
         x_v,y_v = 0.0,0.0
         alive = 1
-        self._agent_obs = np.array(x,y,x_v,y_v,alive)
+        data = [x,y,x_v,y_v,alive]
+        self._agent_obs = np.array(data)
         x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
         y = self.normalize(135,520,200)
         x_v,y_v = 0.0,0.0
         alive = 1
-        self._enemy_obs = np.array(x,y,x_v,y_v,alive)
+        data = [x,y,x_v,y_v,alive]
+        self._enemy_obs = np.array(data)
+        print(self._agent_obs,self._enemy_obs)
+    
 
         # We will sample the target's location randomly until it does not coincide with the agent's location
         while abs(self._agent_obs[0]-self._enemy_obs[0])<25:
@@ -136,6 +142,8 @@ class BonkEnv(gym.Env):
         if self.render_mode == "human":
             self._render_frame()
         info = {}
+        print(observation)
+        print(observation.dtype)
         return observation, info
     
     
