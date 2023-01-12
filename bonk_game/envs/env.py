@@ -34,32 +34,6 @@ class BonkEnv(gym.Env):
         self.ceiling = platform(100,580,115,135,ceiling_color,kill = False)
         self.env_objects = [self.floor,self.left_wall,self.right_wall,self.ceiling]
         
-        # Observations are dictionaries with the agent's and the target's location.
-        # Each location is encoded as an element of {0, ..., `size`}^2, i.e. MultiDiscrete([size, size]).
-        # self.observation_space = gym.spaces.Dict(
-        #     {
-        #         "agent": gym.spaces.Dict(
-        #             {   
-        #                 "x" : gym.spaces.Box(low =0,high = 520, shape=(1,), dtype=np.float64),
-        #                 "y" : gym.spaces.Box(low =0,high = 420, shape=(1,), dtype=np.float64),
-        #                 "x_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-        #                 "y_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-        #                 "alive" : gym.spaces.Discrete(2)
-                    
-        #             }
-        #             ),
-        #         "enemy": gym.spaces.Dict(
-        #             {
-        #                 "x" : gym.spaces.Box(low =0,high = 520, shape=(1,), dtype=np.float64),
-        #                 "y" : gym.spaces.Box(low =0,high = 420, shape=(1,), dtype=np.float64),
-        #                 "x_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-        #                 "y_v" : gym.spaces.Box(low = -10,high = 10,shape=(1,), dtype=np.float64),
-        #                 "alive" : gym.spaces.Discrete(2)
-                    
-        #             }
-        #         )
-        #     }
-        # )
         
         self.observation_space = gym.spaces.Box(-1,1,shape = (10,),dtype = np.float64)
         
@@ -105,7 +79,7 @@ class BonkEnv(gym.Env):
         return np.concatenate((self._agent_obs,self._enemy_obs),axis = 0)
     
     def normalize(self,low,high,val):
-        return (val - low)/(high-low)
+        return ((val - low)/(high-low)-0.5)*2
         
     
     def reset(self,  seed1 = None, options=None):
@@ -119,21 +93,21 @@ class BonkEnv(gym.Env):
         x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
         y = self.normalize(135,520,200)
         x_v,y_v = 0.0,0.0
-        alive = 1
+        alive = 1.0
         data = [x,y,x_v,y_v,alive]
         self._agent_obs = np.array(data)
         x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
         y = self.normalize(135,520,200)
         x_v,y_v = 0.0,0.0
-        alive = 1
+        alive = 1.0
         data = [x,y,x_v,y_v,alive]
         self._enemy_obs = np.array(data)
-        print(self._agent_obs,self._enemy_obs)
+        
     
 
         # We will sample the target's location randomly until it does not coincide with the agent's location
-        while abs(self._agent_obs[0]-self._enemy_obs[0])<25:
-            self._enemy_obs[0] = (121+ np.random.random()*(499-121))
+        while abs(self._agent_obs[0]*480-self._enemy_obs[0]*480)<25:
+            self._enemy_obs[0] = self.normalize(100,580,(121+ np.random.random()*(499-121)))
             
 
         observation = self._get_obs()
@@ -141,15 +115,15 @@ class BonkEnv(gym.Env):
 
         if self.render_mode == "human":
             self._render_frame()
-        info = {}
-        print(observation)
-        print(observation.dtype)
-        return observation, info
+        return observation
     
     
     def step(self, action):
         # Map the action (element of {0,1,2,3}) to the direction we walk in
-        direction = self._action_to_direction[action]
+        # not sure why i need to cast this from np int to int
+        x = int(action)
+        print(action)
+        direction = self._action_to_direction[x]
         # Update agent velocity
         self._agent_obs[2]+= direction[0]
         self._agent_obs[3] += direction[1]
@@ -192,7 +166,7 @@ class BonkEnv(gym.Env):
             self._render_frame()
         info = {}
         
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, info
     
     def render(self):
         if self.render_mode == "rgb_array":
