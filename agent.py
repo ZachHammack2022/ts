@@ -3,6 +3,7 @@ import bonk_game
 import gym
 # #from gymnasium.wrappers import FlattenObservation
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvStepReturn, VecEnvWrapper
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
 
