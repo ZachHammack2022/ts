@@ -1,7 +1,27 @@
 """This file includes all physics based functions to direct gameplay."""
 import math
 
-def env_collision(circle, rect)->None:
+## for gameplay
+def env_collision_game(circle, rect)->None:
+    collision = env_collision(circle,rect)
+    if collision:
+        if rect.kill:
+            circle.reset(circle.sx,200)
+        else:
+            handle_env_collision(circle,rect);
+    
+    
+def env_collision_gym(circle, rect)->None:
+    collision = env_collision(circle,rect)
+    if collision and rect.kill:
+        circle.alive = 0
+    elif collision:
+        handle_env_collision(circle,rect);
+    
+    
+
+
+def env_collision(circle, rect)->bool:
     cx,cy,radius = circle.x,circle.y,circle.r
     rx,ry,rw,rh  = rect.x1,rect.y1,abs(rect.x2-rect.x1),abs(rect.y2-rect.y1)
     #temporary variables to set edges for testing
@@ -25,21 +45,18 @@ def env_collision(circle, rect)->None:
 
     #// if the distance is less than the radius, collision!
     if (distance <= radius):
-        handle_env_collision(circle,rect);
+        return True
 
 def handle_env_collision(user,rect)->None:
-    if rect.kill:
-        user.reset(user.sx,200)
+    bounce = 0.8
+    ## to check for collision
+    # floor.color = (random.randint(0,255),random.randint(0,255),random.randint(0,255)) 
+    user.y_a = 0
+    user.y_v = bounce *-(user.y_v);
+    if rect.y1< 200:
+        user.y = 135+ user.r +0.01
     else:
-        bounce = 0.8
-        ## to check for collision
-        # floor.color = (random.randint(0,255),random.randint(0,255),random.randint(0,255)) 
-        user.y_a = 0
-        user.y_v = bounce *-(user.y_v);
-        if rect.y1< 200:
-            user.y = 135+ user.r +0.01
-        else:
-            user.y = 420 - user.r - 1
+        user.y = 420 - user.r - 1
             
         
 

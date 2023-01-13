@@ -8,7 +8,7 @@ import time
 import pygame
 from bonk_game.envs.player import player
 from bonk_game.envs.platform import platform
-from bonk_game.envs.mechanics import env_collision,player_collision
+from bonk_game.envs.mechanics import env_collision_gym,player_collision
 
 class BonkEnv(gym.Env):
     
@@ -122,7 +122,6 @@ class BonkEnv(gym.Env):
         # Map the action (element of {0,1,2,3}) to the direction we walk in
         # not sure why i need to cast this from np int to int
         x = int(action)
-        print(action)
         direction = self._action_to_direction[x]
         # Update agent velocity
         self._agent_obs[2]+= direction[0]
@@ -130,8 +129,8 @@ class BonkEnv(gym.Env):
         self.p1.x_v = self._agent_obs[2]
         self.p2.y_v = self._agent_obs[3]
         for env_obj in self.env_objects:
-            env_collision(self.p1, env_obj)
-            env_collision(self.p2, env_obj)
+            env_collision_gym(self.p1, env_obj)
+            env_collision_gym(self.p2, env_obj)
         player_collision(self.p1, self.p2)
         self.p1.update(self.p2.opp_score)
         self.p2.update(self.p1.opp_score)

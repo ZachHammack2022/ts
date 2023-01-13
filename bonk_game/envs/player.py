@@ -35,7 +35,7 @@ class player():
     def update(self,score)-> None:
         """_Update velocity and position values
         """
-        assert(self.alive == True)
+        #assert(self.alive == True)
         v_constant = 0.8
         p_constant = 0.8
         g_constant = .4
