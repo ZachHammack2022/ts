@@ -16,12 +16,13 @@ from stable_baselines3.common.env_checker import check_env
 from datetime import datetime
 
 # Parallel environments
-env = gym.make('bonk_game/bonk-v0',render_mode = "human")
+env = make_vec_env('bonk_game/bonk-v0',n_envs=4)
 # check_env(env)
 
 model = PPO('MlpPolicy', env, verbose=1,tensorboard_log="./ppo_bonk_tensorboard/")
-model.learn(total_timesteps=50000,progress_bar=True,tb_log_name="first_run",reset_num_timesteps=False)
-model.learn(total_timesteps=50000,progress_bar=True,tb_log_name="second_run",reset_num_timesteps=False)
+# 
+model.learn(total_timesteps=500000,progress_bar=True,tb_log_name="first_run",reset_num_timesteps=False,log_interval=50000)
+model.learn(total_timesteps=500000,progress_bar=True,tb_log_name="second_run",reset_num_timesteps=False,log_interval=50000)
 time = datetime.now().strftime('%Y-%m-%d-%H:%M:%S-%p')
 file_name = "ppo_bonk" + time
 model.save(file_name)
@@ -33,6 +34,6 @@ model = PPO.load(file_name)
 obs = env.reset()
 for i in range(1000):
     action, _states = model.predict(obs)
-    obs, rewards, dones, info = env.step(action)
-    env.render()
+    obs, rewards, done, info = env.step(action)
+    #env.render()
 
