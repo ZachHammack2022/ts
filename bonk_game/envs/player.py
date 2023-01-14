@@ -73,7 +73,7 @@ class player():
         self.x = x
         self.y = y
         self.heavy = False
-        self.alive = True
+        self.alive = 1
         self.x = x
         self.y = y
         self.r = 20
@@ -88,6 +88,6 @@ class player():
     def dies(self):
         """Set alive attribute to False upon death
         """
-        self.alive = False
+        self.alive = 0
 
         

@@ -14,7 +14,7 @@ def env_collision_game(circle, rect)->None:
 def env_collision_gym(circle, rect)->None:
     collision = env_collision(circle,rect)
     if collision and rect.kill:
-        circle.alive = 0
+        circle.dies()
     elif collision:
         handle_env_collision(circle,rect);
     

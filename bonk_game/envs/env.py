@@ -12,7 +12,7 @@ from bonk_game.envs.mechanics import env_collision_gym,player_collision
 
 class BonkEnv(gym.Env):
     
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 20}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
     def __init__(self,render_mode = None):
         self.width = 680
         self.height = 480 
@@ -22,16 +22,22 @@ class BonkEnv(gym.Env):
         self.p1 = player(200,200,p1_color)
         self.p2 = player(400,200,p2_color)
         self.players = [self.p1,self.p2]
+        
+        # dimensions to start players between
+        self.left = 100
+        self.right = 580
+        self.top = 135
+        self.bottom = 420
     
 
     
         # Initialize platforms
         ceiling_color = (255,204,204)
         wall_color = (32,32,32)
-        self.floor = platform(100,580,420,435,ceiling_color,kill = False)
-        self.left_wall = platform(80,100,115,435,wall_color,kill = True)
-        self.right_wall = platform(580,600,115,435,wall_color,kill = True)
-        self.ceiling = platform(100,580,115,135,ceiling_color,kill = False)
+        self.floor = platform(self.left,self.width-self.left,self.bottom,self.bottom+15,ceiling_color,kill = False)
+        self.left_wall = platform(self.left-20,self.left,self.top-20,self.bottom+15,wall_color,kill = True)
+        self.right_wall = platform(self.right,self.right+20,self.top-20,self.bottom+15,wall_color,kill = True)
+        self.ceiling = platform(self.left,self.right,self.top-20,self.top,ceiling_color,kill = False)
         self.env_objects = [self.floor,self.left_wall,self.right_wall,self.ceiling]
         
         
@@ -89,27 +95,39 @@ class BonkEnv(gym.Env):
 
         # Choose the agent's location uniformly at random
         #self._agent_location = self.np_random.integers(0, self.size, size=2, dtype=int)
+        # 21 is r+1
+        start_width = (self.right-self.left-21)
+        start_height = (self.bottom-self.top-21)
         
-        x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
-        y = self.normalize(135,520,200)
+        
+        self.p1.x,self.p1.y = self.left+ 21+ np.random.random()*start_width,self.top+ 21+ np.random.random()*start_height
+        x = self.normalize(self.left,self.right,self.p1.x)
+        y = self.normalize(self.bottom,self.top,self.p1.y)
         x_v,y_v = 0.0,0.0
+        self.p1.x_v,self.p1.y_v = x_v,y_v
         alive = 1.0
+        self.p1.alive = alive
         data = [x,y,x_v,y_v,alive]
         self._agent_obs = np.array(data)
-        x = self.normalize(100,580,(121+ np.random.random()*(499-121)))
-        y = self.normalize(135,520,200)
+        
+        # same for enemy
+        self.p2.x,self.p2.y =self.left+ 21+ np.random.random()*start_width,self.top+ 21+ np.random.random()*start_height
+        x = self.normalize(self.left,self.right,self.p2.x)
+        y = self.normalize(self.bottom,self.top,self.p2.y)
         x_v,y_v = 0.0,0.0
+        self.p2.x_v,self.p2.y_v = x_v,y_v
         alive = 1.0
+        self.p2.alive = alive
         data = [x,y,x_v,y_v,alive]
         self._enemy_obs = np.array(data)
         
     
 
         # We will sample the target's location randomly until it does not coincide with the agent's location
-        while abs(self._agent_obs[0]*480-self._enemy_obs[0]*480)<25:
-            self._enemy_obs[0] = self.normalize(100,580,(121+ np.random.random()*(499-121)))
+        while abs(self._agent_obs[0]*(self.right-self.left)-self._enemy_obs[0]*(self.right-self.left))<25:
+            self.p2.x = self.left+ 21+ np.random.random()*start_width
+            self._enemy_obs[0] = self.normalize(self.left,self.right,self.p2.x)
             
-
         observation = self._get_obs()
         #info = self._get_info()
 
@@ -124,10 +142,12 @@ class BonkEnv(gym.Env):
         x = int(action)
         direction = self._action_to_direction[x]
         # Update agent velocity
-        self._agent_obs[2]+= direction[0]
-        self._agent_obs[3] += direction[1]
-        self.p1.x_v = self._agent_obs[2]
-        self.p2.y_v = self._agent_obs[3]
+        
+        self.p1.x_v += direction[0]
+        self.p1.y_v += direction[1]
+       
+        
+        
         for env_obj in self.env_objects:
             env_collision_gym(self.p1, env_obj)
             env_collision_gym(self.p2, env_obj)
@@ -138,20 +158,20 @@ class BonkEnv(gym.Env):
         
         
         ## update observations before passing
-        self._agent_obs[0] = self.normalize(100,580,self.p1.x)
-        self._agent_obs[1] = self.normalize(135,520,self.p1.y)
+        self._agent_obs[0] = self.normalize(self.left,self.right,self.p1.x)
+        self._agent_obs[1] = self.normalize(self.bottom,self.top,self.p1.y)
         self._agent_obs[2] = self.normalize(-15,15,self.p1.x_v)
         self._agent_obs[3] = self.normalize(-15,15,self.p1.y_v)
         
-        self._enemy_obs[0] = self.normalize(100,580,self.p2.x)
-        self._enemy_obs[1] = self.normalize(135,520,self.p2.y)
+        self._enemy_obs[0] = self.normalize(self.left,self.right,self.p2.x)
+        self._enemy_obs[1] = self.normalize(self.bottom,self.top,self.p2.y)
         self._enemy_obs[2] = self.normalize(-15,15,self.p2.x_v)
         self._enemy_obs[3] = self.normalize(-15,15,self.p2.y_v)
         
         
         # An episode is done if agent or enemy dies
-        terminated = not self.p1.alive or not self.p2.alive
-        reward = -0.01
+        terminated =  not(self.p1.alive and self.p2.alive)
+        reward = -0.001
         if terminated:
             if self.p1.alive:
                 reward = 1
