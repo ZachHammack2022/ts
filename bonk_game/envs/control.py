@@ -1,5 +1,6 @@
 """ This file contains the main game loop."""
 import  pygame
+from pygame import time
 import gym
 from gym import spaces
 import random
@@ -126,6 +127,7 @@ def game_loop(render):
     #keydown handler
     # set window  (need to define event handlers for each input)
     window = True
+    just_reset = True
     while window:
         for event in pygame.event.get():
             if event.type == QUIT or event.type == K_ESCAPE:
@@ -165,8 +167,10 @@ def game_loop(render):
       
     # update players
         for env_obj in env_objects:
-            env_collision_game(p1, env_obj)
-            env_collision_game(p2, env_obj)
+            reset1 = env_collision_game(p1, env_obj)
+            reset2 = env_collision_game(p2, env_obj)
+        if reset1 or reset2:
+            just_reset = True
         player_collision(p1, p2)
         p1.update(p2.opp_score)
         p2.update(p1.opp_score)
@@ -180,6 +184,9 @@ def game_loop(render):
         draw(surface,players,True)
         # copy surface to screen
         screen.update()
+        if just_reset:
+            time.wait(1000)
+            just_reset = False
         fps.tick(60)
     pygame.quit()
   

@@ -1,14 +1,17 @@
 """This file includes all physics based functions to direct gameplay."""
 import math
 
+
 ## for gameplay
-def env_collision_game(circle, rect)->None:
+def env_collision_game(circle, rect)->bool:
     collision = env_collision(circle,rect)
     if collision:
         if rect.kill:
             circle.reset()
+            return True
         else:
             handle_env_collision(circle,rect);
+    return False
     
     
 def env_collision_gym(circle, rect)->None:
