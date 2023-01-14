@@ -17,7 +17,7 @@ from datetime import datetime
 
 # Parallel environments
 env = gym.make('bonk_game/bonk-v0',render_mode = "human")
-model = PPO.load("test.zip")
+model = PPO.load("ppo_agent.zip")
 obs = env.reset()
 print(obs)
 for i in range(5000):
