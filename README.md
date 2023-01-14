@@ -1,3 +1,3 @@
-This is a working version of bonk.io, a popular online physics-based platform game. This was created using pygame, mostly from scratch aside from the collision functions. This environment has not been modified for RL yet, and currently lacks support for multiplayer or more than 2 players(user and heuristic agent), but could be modified to support these. 
+This is a working version of bonk.io, a popular online physics-based platform game. This was created using pygame, mostly from scratch aside from the collision functions. This environment supports single agent RL. 
 
-Currently, only one bonk.io env exists, but multiple envs could be created after making the env creation more modular. 
+Currently, only one bonk.io env exists, but multiple envs could be created after making the env creation more modular. Multi-agent RL coming soon.
