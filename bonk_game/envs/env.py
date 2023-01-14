@@ -14,13 +14,21 @@ class BonkEnv(gym.Env):
     
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
     def __init__(self,render_mode = None):
+        # dimensions of screen
         self.width = 680
         self.height = 480 
+        # dimensions to start players between
+        self.left = 100
+        self.right = 580
+        self.top = 135
+        self.bottom = 420
+        player_radius = 20
+        
         # Initialize players
         p1_color = (255,102,102)
         p2_color = (0,102,204)
-        self.p1 = player(200,200,p1_color)
-        self.p2 = player(400,200,p2_color)
+        self.p1 = player(player_radius,self.left,self.right,self.top,self.bottom,p1_color)
+        self.p2 = player(player_radius,self.left,self.right,self.top,self.bottom,p2_color)
         self.players = [self.p1,self.p2]
         
         # dimensions to start players between
@@ -34,6 +42,7 @@ class BonkEnv(gym.Env):
         # Initialize platforms
         ceiling_color = (255,204,204)
         wall_color = (32,32,32)
+        
         self.floor = platform(self.left,self.width-self.left,self.bottom,self.bottom+15,ceiling_color,kill = False)
         self.left_wall = platform(self.left-20,self.left,self.top-20,self.bottom+15,wall_color,kill = True)
         self.right_wall = platform(self.right,self.right+20,self.top-20,self.bottom+15,wall_color,kill = True)
@@ -82,7 +91,7 @@ class BonkEnv(gym.Env):
         self.clock = None
         
     def _get_obs(self):
-        return np.concatenate((self._agent_obs,self._enemy_obs),axis = 0)
+        return np.concatenate((self.p1._obs,self.p2._obs),axis = 0)
     
     def normalize(self,low,high,val):
         return ((val - low)/(high-low)-0.5)*2
@@ -96,37 +105,42 @@ class BonkEnv(gym.Env):
         # Choose the agent's location uniformly at random
         #self._agent_location = self.np_random.integers(0, self.size, size=2, dtype=int)
         # 21 is r+1
-        start_width = (self.right-self.left-21)
-        start_height = (self.bottom-self.top-21)
+        # start_width = (self.right-self.left-max(self.p1.r,self.p2.r)-1)
+        # start_height = (self.bottom-self.top-max(self.p1.r,self.p2.r)-1)
         
         
-        self.p1.x,self.p1.y = self.left+ 21+ np.random.random()*start_width,self.top+ 21+ np.random.random()*start_height
-        x = self.normalize(self.left,self.right,self.p1.x)
-        y = self.normalize(self.bottom,self.top,self.p1.y)
-        x_v,y_v = 0.0,0.0
-        self.p1.x_v,self.p1.y_v = x_v,y_v
-        alive = 1.0
-        self.p1.alive = alive
-        data = [x,y,x_v,y_v,alive]
-        self._agent_obs = np.array(data)
+        self.p1.reset(self.left,self.right,self.top,self.bottom)
+        self.p2.reset(self.left,self.right,self.top,self.bottom)
+        
+        """"
+        Changing obs to be a attribute of player
+
+        Returns:
+            _type_: _description_
+        """
+        # x = self.normalize(self.left,self.right,self.p1.x)
+        # y = self.normalize(self.bottom,self.top,self.p1.y)
+        
+    
+        # data = [x,y,x_v,y_v,alive]
+        # self._agent_obs = np.array(data)
         
         # same for enemy
-        self.p2.x,self.p2.y =self.left+ 21+ np.random.random()*start_width,self.top+ 21+ np.random.random()*start_height
-        x = self.normalize(self.left,self.right,self.p2.x)
-        y = self.normalize(self.bottom,self.top,self.p2.y)
-        x_v,y_v = 0.0,0.0
-        self.p2.x_v,self.p2.y_v = x_v,y_v
-        alive = 1.0
-        self.p2.alive = alive
-        data = [x,y,x_v,y_v,alive]
-        self._enemy_obs = np.array(data)
+        # self.p2.x,self.p2.y =self.left+ 21+ np.random.random()*start_width,self.top+ 21+ np.random.random()*start_height
+        # x = self.normalize(self.left,self.right,self.p2.x)
+        # y = self.normalize(self.bottom,self.top,self.p2.y)
+        # x_v,y_v = 0.0,0.0
+        # self.p2.x_v,self.p2.y_v = x_v,y_v
+        # alive = 1.0
+        # self.p2.alive = alive
+        # data = [x,y,x_v,y_v,alive]
+        # self._enemy_obs = np.array(data)
         
     
 
         # We will sample the target's location randomly until it does not coincide with the agent's location
-        while abs(self._agent_obs[0]*(self.right-self.left)-self._enemy_obs[0]*(self.right-self.left))<25:
-            self.p2.x = self.left+ 21+ np.random.random()*start_width
-            self._enemy_obs[0] = self.normalize(self.left,self.right,self.p2.x)
+        while abs(self.p1.x-self.p2.x)<25:
+            self.p2.reset(self.left,self.right,self.top,self.bottom)
             
         observation = self._get_obs()
         #info = self._get_info()
@@ -147,11 +161,16 @@ class BonkEnv(gym.Env):
         self.p1.y_v += direction[1]
        
         
-        
+        # Each player checks each platform for collision
         for env_obj in self.env_objects:
-            env_collision_gym(self.p1, env_obj)
-            env_collision_gym(self.p2, env_obj)
-        player_collision(self.p1, self.p2)
+            for player in self.players:
+                env_collision_gym(player, env_obj)
+                env_collision_gym(player, env_obj)
+                # Each player checks each player for collision
+        for i in range(len(self.players)):
+            for j in range(i+1,len(self.players)):
+                player_collision(self.players[i], self.players[j])
+        # Each agent updates (needs to be be redone)
         self.p1.update(self.p2.opp_score)
         self.p2.update(self.p1.opp_score)
         
