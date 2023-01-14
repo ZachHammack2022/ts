@@ -6,7 +6,7 @@ def env_collision_game(circle, rect)->None:
     collision = env_collision(circle,rect)
     if collision:
         if rect.kill:
-            circle.reset(circle.sx,200)
+            circle.reset()
         else:
             handle_env_collision(circle,rect);
     

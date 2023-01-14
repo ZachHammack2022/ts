@@ -1,5 +1,6 @@
 """Contains player class and methods"""
 import pygame
+import numpy as np
 
 class player():
     
@@ -10,12 +11,18 @@ class player():
             x (double): x_coordinate
             y (double): y_coordinate
         """
+        left = 100
+        right = 580
+        top = 135
+        bottom = 420
+        start_width = (right-left-21)
+        start_height = (bottom-top-21)
         
         self.heavy = False
         self.alive = True
         self.color = color
-        self.x = x
-        self.y = y
+        self.x = left+ 21+ np.random.random()*start_width
+        self.y = top+ 21+ np.random.random()*start_height
         self.r = 20
         self.x_v = 0
         self.y_v = 0
@@ -63,19 +70,24 @@ class player():
     def render(self,canvas)-> None:
         pygame.draw.circle(canvas, self.color, [self.x,self.y], self.r)
     
-    def reset(self,x,y)->None:
+    def reset(self)->None:
         """Changes x or y vel to opposite direction
 
         Args:
             bounce (_type_): _description_
             vert (_type_): _description_
         """
-        self.x = x
-        self.y = y
+        left = 100
+        right = 580
+        top = 135
+        bottom = 420
+        start_width = (right-left-21)
+        start_height = (bottom-top-21)
+        
         self.heavy = False
         self.alive = 1
-        self.x = x
-        self.y = y
+        self.x = left+ 21+ np.random.random()*start_width
+        self.y = top+ 21+ np.random.random()*start_height
         self.r = 20
         self.x_v = 0
         self.y_v = 0
