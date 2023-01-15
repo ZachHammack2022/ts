@@ -18,6 +18,7 @@ from pygame.locals import (
 
 class TestEnv():
     
+    # Should try to make fps modular
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 20}
     def __init__(self,model1 = None, model2 = None, render_mode = None):
         

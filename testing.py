@@ -8,8 +8,8 @@ from stable_baselines3.common.env_checker import check_env
 #template: model2 = PPO.load("c.zip")
 
 # Just one environment
-model1 = PPO.load("c.zip")
-model2 = PPO.load("c.zip")
+model1 = PPO.load("ppo_agent.zip")
+model2 = PPO.load("ppo_agent.zip")
 env = TestEnv(model1,model2,render_mode="human")
 
 # User input will not work with no display initialized
