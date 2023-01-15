@@ -6,13 +6,13 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.env_checker import check_env
 
 # Just one environment
-model1 = PPO.load("b.zip")
-model2 = PPO.load("b.zip")
+model1 = PPO.load("c.zip")
+model2 = PPO.load("c.zip")
 env = TestEnv(model1,model2,render_mode="human")
 obs = env.reset()
 for i in range(5000):
     action1, _states = model1.predict(obs[:10])
-    action2, _states = model1.predict(obs[10:])
+    action2, _states = model2.predict(obs[10:])
     actions = [action1,action2]
     obs, done, info = env.step(actions)
     if done:
