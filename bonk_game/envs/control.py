@@ -1,14 +1,11 @@
 """ This file contains the main game loop."""
 import  pygame
 from pygame import time
-import gym
-from gym import spaces
-import random
 import numpy as np
 from stable_baselines3 import PPO
-from bonk_game.envs.player import *
-from bonk_game.envs.platform import *
-from bonk_game.envs.mechanics import *
+from bonk_game.envs.player import player
+from bonk_game.envs.platform import platform
+from bonk_game.envs.mechanics import env_collision_game, player_collision
 from pygame.locals import (
     K_UP,
     K_DOWN,
@@ -35,20 +32,22 @@ def keydown(key,player):
 def keyup(event,player):
      if event.key == K_SPACE:
         player.heavy = False
-def draw(surface,objects,score):
+        
+def draw_env(surface,objects):
     # draw surface onto backgrond
     # surface.blit(img,(25, 25))
     for object in objects:
         object.render(surface)
-     #update scores
-    if score:
-        myfont1 = pygame.font.SysFont("Comic Sans MS", 20)
-        label1 = myfont1.render("Score "+str(objects[1].opp_score), 1, (0,0,0))
-        surface.blit(label1, (50,20))
+    
+def draw_score(surface,scores):
+    myfont1 = pygame.font.SysFont("Comic Sans MS", 20)
+    label1 = myfont1.render("Score "+ str(scores[0]), 1, (0,0,0))
+    surface.blit(label1, (50,20))
 
-        myfont2 = pygame.font.SysFont("Comic Sans MS", 20)
-        label2 = myfont2.render("Score "+str(objects[0].opp_score), 1, (0,0,0))
-        surface.blit(label2, (470, 20))  
+    myfont2 = pygame.font.SysFont("Comic Sans MS", 20)
+    label2 = myfont2.render("Score "+str(scores[1]), 1, (0,0,0))
+    surface.blit(label2, (470, 20))  
+    
         
 def normalize(low,high,val):
         return ((val - low)/(high-low)-0.5)*2
@@ -69,10 +68,6 @@ def handle_action(action,agent):
     agent.x_v += direction[0]
     agent.y_v += direction[1]
     
-    
-        
-
-
 def game_loop(render):
     
     # import pygame module
@@ -86,7 +81,7 @@ def game_loop(render):
     screen = pygame.display
     screen.set_caption('Bonk.io Simulation')
     surface = screen.set_mode(dims)
-    ai_agent = PPO.load("ppo_agent.zip")
+    ai_agent = PPO.load("a.zip")
     
     # # set the image which to be displayed on screen
     # img = pygame.image.load('assets/white_background.jpeg')
@@ -96,24 +91,15 @@ def game_loop(render):
     top = 135
     bottom = 420
     
-    start_width = (right-left-21)
-    start_height = (bottom-top-21)
-    
     # Initialize players
-    x1,y1  = left+ 21+ np.random.random()*start_width,top+ 21+ np.random.random()*start_height
+    r = 20
     p1_color = (255,102,102)
     p2_color = (0,102,204)
-    x2,y2 = left+ 21+ np.random.random()*start_width,top+ 21+ np.random.random()*start_height
-    # ensure agents have appropriate distance between them
-    while abs(x1-x2)<25:
-        x2,y2 = left+ 21+ np.random.random()*start_width,top+ 21+ np.random.random()*start_height
+
     
-    
-    p1 = player(x1,y1,p1_color)
-    p2 = player(x2,y2,p2_color)
+    p1 = player(r,left,right,top,bottom,p1_color)
+    p2 = player(r,left,right,top,bottom,p2_color)
     players = [p1,p2]
-    
-    
     
     # Initialize platforms
     ceiling_color = (255,204,204)
@@ -146,18 +132,7 @@ def game_loop(render):
         
         # move AI agent
         ## update observations before passing
-        obs = np.zeros(10)
-        obs[0] = normalize(left,right,p2.x)
-        obs[1] = normalize(bottom,top,p2.y)
-        obs[2] = normalize(-15,15,p2.x_v)
-        obs[3] = normalize(-15,15,p2.y_v)
-        obs[4] = 1.0
-        
-        obs[5] = normalize(left,right,p1.x)
-        obs[6] = normalize(bottom,top,p1.y)
-        obs[7] = normalize(-15,15,p1.x_v)
-        obs[8] = normalize(-15,15,p1.y_v)
-        obs[9] = 1.0
+        obs = np.concatenate((p2._obs,p1._obs),axis = 0)
         action, _states = ai_agent.predict(obs)
         handle_action(action,p2)
         
@@ -167,26 +142,23 @@ def game_loop(render):
       
     # update players
         for env_obj in env_objects:
-            reset1 = env_collision_game(p1, env_obj)
-            reset2 = env_collision_game(p2, env_obj)
-        if reset1 or reset2:
-            just_reset = True
+            env_collision_game(p1, env_obj,p2)
+            env_collision_game(p2, env_obj,p1)
         player_collision(p1, p2)
-        p1.update(p2.opp_score)
-        p2.update(p1.opp_score)
+        p1.update()
+        p2.update()
 
         
         if not (p1.alive and p2.alive) or (p1.score+p2.score ==100):
             window = False
                 
         # draw
-        draw(surface,env_objects,False)
-        draw(surface,players,True)
+        draw_env(surface,env_objects)
+        draw_env(surface,players)
+        scores = [p1.score,p2.score]
+        draw_score(surface,scores)
         # copy surface to screen
         screen.update()
-        if just_reset:
-            time.wait(1000)
-            just_reset = False
-        fps.tick(60)
+        fps.tick(20)
     pygame.quit()
   

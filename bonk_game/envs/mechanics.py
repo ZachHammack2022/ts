@@ -1,9 +1,9 @@
-"""This file includes all physics based functions to diplatform gameplay."""
+"""This file includes all physics based functions to direct gameplay."""
 import math
 
 
 
-def env_collision_game(agent, platform)->bool:
+def env_collision_game(agent, platform,enemy)->None:
     """_summary_
     This function is called when testing if an an agent collides with 
     a platform in-game. 
@@ -12,18 +12,15 @@ def env_collision_game(agent, platform)->bool:
         agent (_type_ player): An moving agent in the game
         platform (_type_ platform): A stationary platform
 
-    Returns:
-        bool: Whether to pause due to a reset (to allow player to see
-        where new starting point is)
+
     """
     collision = env_collision(agent,platform)
     if collision:
         if platform.kill:
             agent.reset()
-            return True
+            enemy.score +=1
         else:
             handle_env_collision(agent,platform);
-    return False
     
 
 def env_collision_gym(agent, platform)->None:

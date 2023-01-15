@@ -34,7 +34,7 @@ class player():
         self.score = 0
         self._obs = np.array([self.normalize(left,right,self.x),self.normalize(top,bottom,self.y),self.x_v,self.y_v,self.alive])
        
-    def update(self,score)-> None:
+    def update(self)-> None:
         """_Update velocity and position values
         """
         v_constant = 0.8
@@ -43,22 +43,27 @@ class player():
         self.x_v += v_constant*self.x_a
         self.y_v += v_constant*self.y_a + g_constant
         # prepare velocities for normalization
-        if self.x_v >15:
-            self.x_v = 15
-        if self.x_v <-15:
-            self.x_v = -15
-        if self.y_v >15:
-            self.y_v = 15
-        if self.y_v <-15:
-            self.y_v = -15
+        v_range = 30
+        if self.x_v >v_range/2:
+            self.x_v = v_range/2
+        if self.x_v <-v_range/2:
+            self.x_v = -v_range/2
+        if self.y_v >v_range/2:
+            self.y_v = v_range/2
+        if self.y_v <-v_range/2:
+            self.y_v = -v_range/2
             
         
         self.x+= p_constant*self.x_v
         self.y += p_constant*self.y_v
-        self.y = min(420-self.r,self.y)
-        self.score = score
+        self.y = min(self.bottom-self.r,self.y)
         
-        self._obs = np.array([self.normalize(left,right,self.x),self.normalize(top,bottom,self.y),self.x_v,self.y_v,self.alive])
+        x = self.normalize(self.left,self.right,self.x)
+        y = self.normalize(self.top,self.bottom,self.y)
+        x_v = self.normalize(-v_range/2,v_range/2,self.x_v)
+        y_v = self.normalize(-v_range/2,v_range/2,self.y_v)
+        
+        self._obs = np.array([x,y,x_v,y_v,self.alive])
         # # for testing
         # if self.x <-10 or self.x >680 or self.y<-10 or self.y >480:
         #      self.reset(self.sx,200)
@@ -66,28 +71,28 @@ class player():
     def render(self,canvas)-> None:
         pygame.draw.circle(canvas, self.color, [self.x,self.y], self.r)
     
-    def reset(self,left,right,top,bottom)->None:
+    def reset(self)->None:
         """Changes x or y vel to opposite direction
 
         Args:
             bounce (_type_): _description_
             vert (_type_): _description_
         """
-        start_width = (right-left-21)
-        start_height = (bottom-top-21)
+        start_width = (self.right-self.left-21)
+        start_height = (self.bottom-self.top-21)
         
         self.heavy = False
         self.alive = 1.0
-        self.x = left+ 21+ np.random.random()*start_width
-        self.y = top+ 21+ np.random.random()*start_height
+        self.x = self.left+ 21+ np.random.random()*start_width
+        self.y = self.top+ 21+ np.random.random()*start_height
         self.x_v = 0
         self.y_v = 0
         self.x_a = 0
         self.y_a = 0
         self.m = 1
         self.opp_score +=1
-        x = self.normalize(left,right,self.x)
-        y = self.normalize(bottom,top,self.y)
+        x = self.normalize(self.left,self.right,self.x)
+        y = self.normalize(self.top,self.bottom,self.y)
         
         self._obs = np.array([x,y,self.x_v,self.y_v,self.alive])
     
