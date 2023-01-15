@@ -190,7 +190,8 @@ class TestEnv():
                 
     def update_velocities(self,actions):
         # Update velocity for AI agents and users
-        keys = pygame.key.get_pressed()
+        if self.user1 or self.user2:
+            keys = pygame.key.get_pressed()
         if self.user1:
            self.check_keydown(keys,self.p1)
         elif self.user2:
