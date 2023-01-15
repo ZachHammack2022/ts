@@ -1,11 +1,10 @@
 """ This file contains the main game loop."""
 import  pygame
-from pygame import time
 import numpy as np
 from stable_baselines3 import PPO
-from bonk_game.envs.player import player
-from bonk_game.envs.platform import platform
-from bonk_game.envs.mechanics import env_collision_game, player_collision
+from bonk_game.envs.utils.player import player
+from bonk_game.envs.utils.platform import platform
+from bonk_game.envs.utils.mechanics import env_collision_game, player_collision
 from pygame.locals import (
     K_UP,
     K_DOWN,
@@ -113,7 +112,6 @@ def game_loop(render):
     #keydown handler
     # set window  (need to define event handlers for each input)
     window = True
-    just_reset = True
     while window:
         for event in pygame.event.get():
             if event.type == QUIT or event.type == K_ESCAPE:
@@ -149,7 +147,7 @@ def game_loop(render):
         p2.update()
 
         
-        if not (p1.alive and p2.alive) or (p1.score+p2.score ==100):
+        if (p1.score+p2.score ==100):
             window = False
                 
         # draw

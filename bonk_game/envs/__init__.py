@@ -1,1 +1,1 @@
-from bonk_game.envs.env import BonkEnv
+from bonk_game.envs.training_env import BonkEnv

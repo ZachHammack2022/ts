@@ -16,8 +16,10 @@ def env_collision_game(agent, platform,enemy)->None:
     """
     collision = env_collision(agent,platform)
     if collision:
+        agent.reset()
+        enemy.reset()
         if platform.kill:
-            agent.reset()
+            agent.dies()
             enemy.score +=1
         else:
             handle_env_collision(agent,platform);

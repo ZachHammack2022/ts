@@ -2,14 +2,39 @@ import numpy as np
 import gym
 import pygame
 import math
-from bonk_game.envs.player import player
-from bonk_game.envs.platform import platform
-from bonk_game.envs.mechanics import env_collision_gym,player_collision
+from bonk_game.envs.utils.player import player
+from bonk_game.envs.utils.platform import platform
+from bonk_game.envs.utils.mechanics import env_collision_gym,player_collision
+from pygame.locals import (
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_w,
+    K_a,
+    K_s, 
+    K_d,
+)
 
-class BonkEnv(gym.Env):
+class TestEnv():
     
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
-    def __init__(self,render_mode = None):
+    def __init__(self,model1 = None, model2 = None, render_mode = None):
+        
+        self.user1 = False
+        self.user2 = False
+        self.model1 = None
+        self.model2 = None
+        # initialize models
+        if model1 is None:
+            self.user1 = True
+        if model2 is None:
+            self.user2 = True
+        
+        if not self.user1:
+            self.model1 = model1
+        if not self.user2:
+            self.model2 = model2
         
         # dimensions of screen
         self.width = 680
@@ -44,12 +69,6 @@ class BonkEnv(gym.Env):
         self.ceiling = platform(self.left,self.right,self.top-20,self.top,ceiling_color,kill = False)
         self.env_objects = [self.floor,self.left_wall,self.right_wall,self.ceiling]
         
-        # Define Observation space
-        self.observation_space = gym.spaces.Box(-1,1,shape = (10,),dtype = np.float64)
-        
-        # Define Action Space
-        self.action_space = gym.spaces.Discrete(8)
-        
         # Map action to movement
         self._action_to_direction = {
             0: np.array([1, 0]),
@@ -74,9 +93,12 @@ class BonkEnv(gym.Env):
         """
         self.window = None
         self.clock = None
-        
+    
+    # need to flip for one of the agents
     def _get_obs(self):
-        return np.concatenate((self.p1._obs,self.p2._obs),axis = 0)
+        a = np.concatenate((self.p1._obs,self.p2._obs),axis = 0)
+        b = np.concatenate((self.p2._obs,self.p1._obs),axis = 0)
+        return np.concatenate((a,b),axis = 0)
     
     def normalize(self,low,high,val):
         return ((val - low)/(high-low)-0.5)*2
@@ -109,12 +131,78 @@ class BonkEnv(gym.Env):
         for i in range(len(self.players)):
             for j in range(i+1,len(self.players)):
                 player_collision(self.players[i], self.players[j])
+                
+    def agent_action(self,agent,action):
+        # Map the action to change in velocity
+        # not sure why i need to cast this from np int to int
+        x = int(action)
+        d = self._action_to_direction[x]
+        
+        # Update agent velocity
+        agent.x_v += d[0]
+        agent.y_v += d[1]
+    
+    def keydownp1(self,key):
+    
+        if key == K_w:
+            self.p1.y_v -=1
+        elif key == K_s:
+            self.p1.y_v +=1
+        elif key == K_a:
+            self.p1.x_v -=1
+        elif key == K_d:
+            self.p1.x_v +=1
             
+    def keydownp2(self,key):
+    
+        if key == K_UP:
+            self.p2.y_v -=1
+        elif key == K_DOWN:
+            self.p2.y_v +=1
+        elif key == K_LEFT:
+            self.p2.x_v -=1
+        elif key == K_RIGHT:
+            self.p2.x_v +=1
+    
+    def check_keydown(self,keys,agent):
+        if agent == self.p2:
+            if keys[pygame.K_LEFT]:
+                self.keydownp2(K_LEFT)
+            if keys[pygame.K_RIGHT]:
+                self.keydownp2(K_RIGHT)
+            if keys[pygame.K_UP]:
+                self.keydownp2(K_UP)
+            if keys[pygame.K_DOWN]:
+                self.keydownp2(K_DOWN)
+        else:
+            if keys[pygame.K_w]:
+                self.keydownp1(K_w)
+            if keys[pygame.K_a]:
+                self.keydownp1(K_a)
+            if keys[pygame.K_s]:
+                self.keydownp1(K_s)
+            if keys[pygame.K_d]:
+                self.keydownp1(K_d)
+                
+    def update_velocities(self,actions):
+        # Update velocity for AI agents and users
+        keys = pygame.key.get_pressed()
+        if self.user1:
+           self.check_keydown(keys,self.p1)
+        elif self.user2:
+           self.agent_action(self.p1,actions)
+        else:
+            self.agent_action(self.p1,actions[0])
+        if self.user2:
+            self.check_keydown(keys,self.p2)
+        elif self.user1:
+           self.agent_action(self.p2,actions)
+        else:
+            self.agent_action(self.p2,actions[1])
+                
         
     
-    def reset(self,  seed1 = None, options=None):
-        
-        # Super.reset function omitted
+    def reset(self):
         # reset players
         for agent in self.players:
             agent.reset()
@@ -122,50 +210,35 @@ class BonkEnv(gym.Env):
         # Continue to reset players until there are no overlaps
         self.fix_overlaps()
             
-        observation = self._get_obs()
-        
+        obs = self._get_obs()
 
         if self.render_mode == "human":
             self._render_frame()
             
-        #info = self._get_info() not used or returned here
-        return observation
+        return obs
     
     
-    def step(self, action):
-        # Map the action to change in velocity
-        # not sure why i need to cast this from np int to int
-        x = int(action)
-        direction = self._action_to_direction[x]
+    def step(self, actions):
         
-        # Update agent velocity
-        self.p1.x_v += direction[0]
-        self.p1.y_v += direction[1]
-       
-        
+        self.update_velocities(actions)
         self.check_collisions()
         
-        # Update players, needs to be fixed
-        
+        # Update players
         self.p1.update()
         self.p2.update()
        
         # An episode is done if agent or enemy dies
-        terminated =  not(self.p1.alive and self.p2.alive)
-        reward = -0.001
-        if terminated:
-            if self.p1.alive:
-                reward = 1
-            else:
-                reward = -1 # Binary sparse rewards
+        high_score = 10
+        terminated =  (self.p1.score == high_score or self.p2.score == high_score)
+    
             
-        observation = self._get_obs()
+        obs = self._get_obs()
 
         if self.render_mode == "human":
             self._render_frame()
         info = {}
         
-        return observation, reward, terminated, info
+        return obs, terminated, info
     
     def render(self):
         if self.render_mode == "rgb_array":
@@ -178,6 +251,7 @@ class BonkEnv(gym.Env):
             self.window = pygame.display.set_mode(
                 (self.width, self.height)
             )
+            #self.window.set_caption('Bonk.io Testing')
         if self.clock is None and self.render_mode == "human":
             self.clock = pygame.time.Clock()
 
