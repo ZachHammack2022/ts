@@ -11,15 +11,14 @@ def env_collision_game(agent, platform,enemy)->None:
     Args:
         agent (_type_ player): An moving agent in the game
         platform (_type_ platform): A stationary platform
+        enemy: Enemy moving object
 
 
     """
     collision = env_collision(agent,platform)
     if collision:
-        agent.reset()
-        enemy.reset()
         if platform.kill:
-            agent.dies()
+            agent.reset()
             enemy.score +=1
         else:
             handle_env_collision(agent,platform);

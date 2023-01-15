@@ -4,7 +4,7 @@ import pygame
 import math
 from bonk_game.envs.utils.player import player
 from bonk_game.envs.utils.platform import platform
-from bonk_game.envs.utils.mechanics import env_collision_gym,player_collision
+from bonk_game.envs.utils.mechanics import env_collision_game,player_collision
 from pygame.locals import (
     K_UP,
     K_DOWN,
@@ -18,7 +18,7 @@ from pygame.locals import (
 
 class TestEnv():
     
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 20}
     def __init__(self,model1 = None, model2 = None, render_mode = None):
         
         self.user1 = False
@@ -52,6 +52,7 @@ class TestEnv():
         self.p1 = player(self.r,self.left,self.right,self.top,self.bottom,p1_color)
         self.p2 = player(self.r,self.left,self.right,self.top,self.bottom,p2_color)
         self.players = [self.p1,self.p2]
+        self.scores = [self.p1.score,self.p2.score]
         
         # dimensions to start players between
         self.left = 100
@@ -124,8 +125,10 @@ class TestEnv():
         # Each player checks each platform for collision
         for env_obj in self.env_objects:
             for player in self.players:
-                env_collision_gym(player, env_obj)
-                env_collision_gym(player, env_obj)
+                enemy = self.p1
+                if player == self.p1:
+                    enemy = self.p2
+                env_collision_game(player, env_obj,enemy)
                 
         # Each player checks each player for collision
         for i in range(len(self.players)):
@@ -226,6 +229,9 @@ class TestEnv():
         # Update players
         self.p1.update()
         self.p2.update()
+        
+        # Update scores for rendering
+        self.scores = [self.p1.score,self.p2.score]
        
         # An episode is done if agent or enemy dies
         high_score = 10
@@ -243,6 +249,15 @@ class TestEnv():
     def render(self):
         if self.render_mode == "rgb_array":
             return self._render_frame()
+        
+    def render_score(self,canvas):
+        myfont1 = pygame.font.SysFont("Comic Sans MS", 20)
+        label1 = myfont1.render("Score "+ str(self.scores[0]), 1, (0,0,0))
+        canvas.blit(label1, (50,20))
+
+        myfont2 = pygame.font.SysFont("Comic Sans MS", 20)
+        label2 = myfont2.render("Score "+str(self.scores[1]), 1, (0,0,0))
+        canvas.blit(label2, (470, 20))
         
     def _render_frame(self):
         if self.window is None and self.render_mode == "human":
@@ -266,6 +281,9 @@ class TestEnv():
         # render environment objects
         for object in self.env_objects:
             object.render(canvas)
+            
+        # render scores
+        self.render_score(canvas)
     
         if self.render_mode == "human":
             # The following line copies our drawings from `canvas` to the visible window
