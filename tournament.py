@@ -6,21 +6,9 @@ from stable_baselines3.common.env_util import make_vec_env
 import os
 from bonk_game.envs.testing_env import TestEnv
 from bonk_game.envs.match_env import MatchEnv
+from bonk_game.envs.utils.testing import load_agents
 import random
 
-
-
-# pass in a dict to load models with the correct functions
-def load_agents(models):
-    loaded_agents = {}
-    for key in models:
-        path = f"./agents/{key}.zip"
-        if (os.path.exists(path)):
-            file_name = f"./agents/{key}"
-            model = models[key]
-            agent = model.load(file_name)
-            loaded_agents[key] = agent
-    return loaded_agents
 
 def run_tournament(participants,steps = 5000):
     while len(participants) >1:

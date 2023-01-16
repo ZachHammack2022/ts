@@ -4,6 +4,7 @@ from stable_baselines3 import PPO,A2C,DQN
 from sb3_contrib import ARS
 from stable_baselines3.common.env_util import make_vec_env
 import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 def train(models):
     """Take in predefined models (on specific envs) to train and save the agents
@@ -14,7 +15,8 @@ def train(models):
     
     for key in models:
         model = models[key]
-        model.learn(total_timesteps=250000,progress_bar=True)
+        print(f"Training the {key} agent.")
+        model.learn(total_timesteps=150000,progress_bar=True)
         filename = f"./agents/{key}"
         model.save(filename)
 
@@ -33,25 +35,41 @@ def create_models(env,verbose):
     
     return models
 
-def delete(models):
+def delete_models(models):
     for key in models:
         if (os.path.exists(f"./agents/{key}")):
             os.remove(f"./agents/{key}")
+
+def check_agents():
+    models = models = ({
+        "ppo": PPO,
+        "a2c": A2C,
+        "dqn": DQN,
+        "ars": ARS,
+    })
+    agents = False
+    for key in models:
+        path = f"./agents/{key}.zip"
+        if (os.path.exists(path)):
+            agents = True
+    return agents
+            
     
-        
-# Create parallel environments
-env = make_vec_env("bonk_game/bonk-v0", n_envs=4)
 
-# Create models
-models = create_models(env,verbose = 0)
+def train_models():
+    # Create parallel environments
+    env = make_vec_env("bonk_game/bonk-v0", n_envs=4)
 
-# Delete old agents from files
-delete(models)
+    # Create models
+    models = create_models(env,verbose = 0)
 
-# Train agents
-train(models)
+    # Delete old agents from files
+    delete_models(models)
 
-print("All agents have been trained!")
+    # Train agents
+    train(models)
+
+    print("All agents have been trained!")
 
 
 

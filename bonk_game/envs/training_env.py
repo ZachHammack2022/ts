@@ -1,5 +1,7 @@
 import numpy as np 
 import gym
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import math
 from bonk_game.envs.utils.player import player

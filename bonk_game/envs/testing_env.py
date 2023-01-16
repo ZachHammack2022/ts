@@ -1,5 +1,7 @@
 import numpy as np 
 import gym
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import math
 from bonk_game.envs.utils.player import player
@@ -19,17 +21,17 @@ from pygame.locals import (
 class TestEnv():
     
     # Should try to make fps modular
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 20}
-    def __init__(self,model1 = None, model2 = None, render_mode = None):
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
+    def __init__(self,model1, model2, render_mode = None):
         
         self.user1 = False
         self.user2 = False
         self.model1 = None
         self.model2 = None
         # initialize models
-        if model1 is None:
+        if model1 == "user":
             self.user1 = True
-        if model2 is None:
+        if model2 == "user":
             self.user2 = True
         
         if not self.user1:
