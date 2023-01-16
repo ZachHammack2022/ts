@@ -62,7 +62,7 @@ assert num_agents in (2,4,8,16)
 participants = agents.copy()
 winner = run_tournament(participants,steps = 100000)
 alg = winner.keys()
-print(f"The winner of the tournament is the {list(alg)[0]}!")
+print(f"The winner of the tournament is the {list(alg)[0]} agent!")
          
     
     
