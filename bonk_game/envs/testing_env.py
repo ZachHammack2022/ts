@@ -48,6 +48,7 @@ class TestEnv():
         self.top = 135
         self.bottom = 420
         self.r = 20
+        self.force = 0.25 # force players experience on input
         
         # Initialize players
         p1_color = (255,102,102)
@@ -128,10 +129,10 @@ class TestEnv():
         # Each player checks each platform for collision
         for env_obj in self.env_objects:
             for player in self.players:
-                enemy = self.p1
                 if player == self.p1:
-                    enemy = self.p2
-                env_collision_game(player, env_obj,enemy)
+                    self.p2.score += env_collision_game(player, env_obj)
+                elif player == self.p2:
+                    self.p1.score += env_collision_game(player, env_obj)
                 
         # Each player checks each player for collision
         for i in range(len(self.players)):
@@ -139,71 +140,55 @@ class TestEnv():
                 player_collision(self.players[i], self.players[j])
                 
     def agent_action(self,agent,action):
-        # Map the action to change in velocity
+        # Map the action to change in acceleration
         # not sure why i need to cast this from np int to int
         x = int(action)
         d = self._action_to_direction[x]
         
         # Update agent velocity
-        agent.x_v += d[0]
-        agent.y_v += d[1]
-    
-    def keydownp1(self,key):
-    
-        if key == K_w:
-            self.p1.y_v -=1
-        elif key == K_s:
-            self.p1.y_v +=1
-        elif key == K_a:
-            self.p1.x_v -=1
-        elif key == K_d:
-            self.p1.x_v +=1
-            
-    def keydownp2(self,key):
-    
-        if key == K_UP:
-            self.p2.y_v -=1
-        elif key == K_DOWN:
-            self.p2.y_v +=1
-        elif key == K_LEFT:
-            self.p2.x_v -=1
-        elif key == K_RIGHT:
-            self.p2.x_v +=1
+        agent.x_a += d[0]/agent.m
+        agent.y_a += d[1]/agent.m
     
     def check_keydown(self,keys,agent):
         if agent == self.p2:
             if keys[pygame.K_LEFT]:
-                self.keydownp2(K_LEFT)
+                agent.x_a -= self.force/agent.m
             if keys[pygame.K_RIGHT]:
-                self.keydownp2(K_RIGHT)
+                agent.x_a += self.force/agent.m
             if keys[pygame.K_UP]:
-                self.keydownp2(K_UP)
+                agent.y_a -= self.force/agent.m
             if keys[pygame.K_DOWN]:
-                self.keydownp2(K_DOWN)
+                agent.y_a += self.force/agent.m
         else:
             if keys[pygame.K_w]:
-                self.keydownp1(K_w)
+                agent.y_a -= self.force/agent.m
             if keys[pygame.K_a]:
-                self.keydownp1(K_a)
+                agent.x_a -= self.force/agent.m
             if keys[pygame.K_s]:
-                self.keydownp1(K_s)
+                agent.y_a += self.force/agent.m
             if keys[pygame.K_d]:
-                self.keydownp1(K_d)
+                agent.x_a += self.force/agent.m
                 
-    def update_velocities(self,actions):
+    def apply_forces(self,actions):
         # Update velocity for AI agents and users
         if self.user1 or self.user2:
             keys = pygame.key.get_pressed()
+        # If user is player, get action from keys
         if self.user1:
            self.check_keydown(keys,self.p1)
+        # if p1 is AI and p2 is user, actions controls p1 action
         elif self.user2:
            self.agent_action(self.p1,actions)
+        # both ai, actions[0] control p1
         else:
             self.agent_action(self.p1,actions[0])
+        # If user is player, get action from keys
         if self.user2:
             self.check_keydown(keys,self.p2)
+        # if p2 is AI and p1 is user, actions controls p2 action
         elif self.user1:
            self.agent_action(self.p2,actions)
+        # both ai, actions[1] control p2
         else:
             self.agent_action(self.p2,actions[1])
                 
@@ -225,9 +210,9 @@ class TestEnv():
         return obs
     
     
-    def step(self, actions):
+    def step(self, forces):
         
-        self.update_velocities(actions)
+        self.apply_forces(forces)
         self.check_collisions()
         
         # Update players

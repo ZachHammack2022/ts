@@ -3,7 +3,7 @@ import math
 
 
 
-def env_collision_game(agent, platform,enemy)->None:
+def env_collision_game(agent, platform)->bool:
     """_summary_
     This function is called when testing if an an agent collides with 
     a platform in-game. 
@@ -19,9 +19,10 @@ def env_collision_game(agent, platform,enemy)->None:
     if collision:
         if platform.kill:
             agent.reset()
-            enemy.score +=1
+            return True
         else:
             handle_env_collision(agent,platform);
+    return False
     
 
 def env_collision_gym(agent, platform)->None:
@@ -88,11 +89,11 @@ def handle_env_collision(agent,platform)->None:
         agent (_type_ player): An moving agent in the game
         platform (_type_ platform): A stationary platform
     """
-    bounce = 0.8
-    ## to check for collision
-    # floor.color = (random.randint(0,255),random.randint(0,255),random.randint(0,255)) 
+    bounce = -0.8
+    # switch velocity
     agent.y_a = 0
-    agent.y_v = bounce *-(agent.y_v);
+    agent.y_v = bounce * agent.y_v
+    # ensure player y value is correct
     if platform.y1< 200:
         agent.y = 135+ agent.r +0.01
     else:
@@ -130,6 +131,11 @@ def handle_player_collision(a1,a2,d)->None:
     a1.y_v = a1.y_v - p * a1.m * ny
     a2.x_v = a2.x_v+ p * a2.m * nx
     a2.y_v = a2.y_v + p * a2.m * ny
+    
+    # set accelerations to 0
+    a1.x_a,a1.y_a,a2.x_a,a2.y_a = 0,0,0,0
+    
+    
     
 
     
