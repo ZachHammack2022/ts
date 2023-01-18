@@ -7,6 +7,7 @@ import math
 from bonk_game.envs.utils.player import player
 from bonk_game.envs.utils.platform import platform
 from bonk_game.envs.utils.mechanics import env_collision_gym,player_collision
+from stable_baselines3 import PPO
 
 class BonkEnv(gym.Env):
     
@@ -29,6 +30,7 @@ class BonkEnv(gym.Env):
         self.p1 = player(self.r,self.left,self.right,self.top,self.bottom,p1_color)
         self.p2 = player(self.r,self.left,self.right,self.top,self.bottom,p2_color)
         self.players = [self.p1,self.p2]
+        self.force = 2
     
         # Initialize platforms
         ceiling_color = (255,204,204)
@@ -40,23 +42,40 @@ class BonkEnv(gym.Env):
         self.ceiling = platform(self.left,self.right,self.top-20,self.top,ceiling_color,kill = False)
         self.env_objects = [self.floor,self.left_wall,self.right_wall,self.ceiling]
         
-        # Define Observation space
-        self.observation_space = gym.spaces.Box(-1,1,shape = (10,),dtype = np.float64)
+        # Define Observation space 
+        self.observation_space = gym.spaces.Box(-1,1,shape = (12,),dtype = np.float64)
         
         # Define Action Space
-        self.action_space = gym.spaces.Discrete(8)
+        self.action_space = gym.spaces.Discrete(16)
         
-        # Map action to movement
+          # Map action to movement (x,y,heavy action)
         self._action_to_direction = {
-            0: np.array([1, 0]),
-            1: np.array([0, 1]),
-            2: np.array([-1, 0]),
-            3: np.array([0, -1]),
-            4: np.array([1, 1]),
-            5: np.array([1, -1]),
-            6: np.array([-1, 1]),
-            7: np.array([-1, -1])
+            0: np.array([1, 0,0]),
+            1: np.array([0, 1,0]),
+            2: np.array([-1, 0,0]),
+            3: np.array([0, -1,0]),
+            4: np.array([1, 1,0]),
+            5: np.array([1, -1,0]),
+            6: np.array([-1, 1,0]),
+            7: np.array([-1, -1,1]),
+            8: np.array([1, 0,1]),
+            9: np.array([0, 1,1]),
+            10: np.array([-1, 0,1]),
+            11: np.array([0, -1,1]),
+            12: np.array([1, 1,1]),
+            13: np.array([1, -1,1]),
+            14: np.array([-1, 1,1]),
+            15: np.array([-1, -1,1]),
         }
+        
+        # Load bad agent if it exists
+        self.bad_agent = 0
+        self.bad_agent_exists = 0
+        path = f"./agents/bad.zip"
+        if (os.path.exists(path)):
+            file_name = f"./agents/bad"
+            self.bad_agent = PPO.load(file_name)
+            self.bad_agent_exists = 1
      
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
@@ -71,8 +90,11 @@ class BonkEnv(gym.Env):
         self.window = None
         self.clock = None
         
-    def _get_obs(self):
-        return np.concatenate((self.p1._obs,self.p2._obs),axis = 0)
+    def _get_obs(self,bad_agent):
+        if bad_agent:
+            return np.concatenate((self.p2.get_obs(),self.p1.get_obs()),axis = 0)
+        else:
+            return np.concatenate((self.p1.get_obs(),self.p2.get_obs()),axis = 0)
     
     def normalize(self,low,high,val):
         return ((val - low)/(high-low)-0.5)*2
@@ -118,7 +140,7 @@ class BonkEnv(gym.Env):
         # Continue to reset players until there are no overlaps
         self.fix_overlaps()
             
-        observation = self._get_obs()
+        observation = self._get_obs(bad_agent=False)
         
 
         if self.render_mode == "human":
@@ -127,16 +149,27 @@ class BonkEnv(gym.Env):
         #info = self._get_info() not used or returned here
         return observation
     
-    
-    def step(self, action):
-        # Map the action to change in velocity
-        # not sure why i need to cast this from np int to int
+    def make_action(self,agent,action):
         x = int(action)
-        direction = self._action_to_direction[x]
+        d = self._action_to_direction[x]
         
         # Update agent velocity
-        self.p1.x_v += direction[0]
-        self.p1.y_v += direction[1]
+        agent.move_right(d[0]*self.force)
+        agent.move_down(d[1]*self.force)
+        if d[2]:
+            agent.make_heavy()
+    
+    
+    def step(self, action1):
+        
+        # if bad agent exists, bad agent acts based off of last obs
+        if self.bad_agent_exists:
+            action2, _states = self.bad_agent.predict(self._get_obs(bad_agent=True))
+            self.make_action(agent = self.p2,action = action2)
+        
+        
+        # Agent 1 acts no matter what
+        self.make_action(agent=self.p1,action = action1)
        
         
         self.check_collisions()
@@ -155,7 +188,7 @@ class BonkEnv(gym.Env):
             else:
                 reward = -1 # Binary sparse rewards
             
-        observation = self._get_obs()
+        observation = self._get_obs(bad_agent = False)
 
         if self.render_mode == "human":
             self._render_frame()

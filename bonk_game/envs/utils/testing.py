@@ -38,12 +38,12 @@ def run_test(model1,model2,env,steps):
         if model1 == "user" and model2 == "user":
             actions = ""
         elif model1 == "user":
-            actions, _states = model2.predict(obs[10:])
+            actions, _states = model2.predict(obs[12:])
         elif model2 == "user":
-            actions, _states = model1.predict(obs[:10])
+            actions, _states = model1.predict(obs[:12])
         else:
-            action1, _states = model1.predict(obs[:10])
-            action2, _states = model2.predict(obs[10:])
+            action1, _states = model1.predict(obs[:12])
+            action2, _states = model2.predict(obs[12:])
             actions = [action1,action2]
         obs, done, info = env.step(actions)
         if done:
@@ -91,6 +91,7 @@ def get_steps():
 def test():
     
     models = ({
+        "bad": PPO,
         "ppo": PPO,
         "a2c": A2C,
         "dqn": DQN,
@@ -98,11 +99,12 @@ def test():
     })
     
     inputs = ({
-        0: "ppo",
-        1: "a2c",
-        2: "dqn",
-        3: "ars",
-        4: "user"
+        0: "bad",
+        1: "ppo",
+        2: "a2c",
+        3: "dqn",
+        4: "ars",
+        5: "user"
     })
     
     

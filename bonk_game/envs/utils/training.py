@@ -6,6 +6,13 @@ from stable_baselines3.common.env_util import make_vec_env
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
+
+def train_bad_agent(model):
+    print(f"Training the bad agent.")
+    model.learn(total_timesteps=50000,progress_bar=True)
+    filename = f"./agents/bad"
+    model.save(filename)
+
 def train(models):
     """Take in predefined models (on specific envs) to train and save the agents
 
@@ -13,20 +20,26 @@ def train(models):
         models (dict): (str)Name: (model object) Model
     """
     
+    train_bad_agent(models["bad"])
+    
     for key in models:
+        if key == "bad":
+            continue
         model = models[key]
         print(f"Training the {key} agent.")
-        model.learn(total_timesteps=150000,progress_bar=True)
+        model.learn(total_timesteps=500000,progress_bar=True)
         filename = f"./agents/{key}"
         model.save(filename)
 
 def create_models(env,verbose):
     ars = ARS("LinearPolicy", env, verbose=verbose)
-    ppo = PPO("MlpPolicy", env, verbose=verbose)
+    ppo1 = PPO("MlpPolicy", env, verbose=verbose)
+    ppo2 = PPO("MlpPolicy", env, verbose=verbose)
     a2c = A2C("MlpPolicy", env, verbose=verbose)
     dqn = DQN("MlpPolicy", env, verbose=verbose)
     models = {
-        "ppo": ppo,
+        "bad":ppo1,
+        "ppo": ppo2,
         "a2c": a2c,
         "dqn": dqn,
         "ars": ars,

@@ -14,6 +14,8 @@ def run_tournament(participants,steps = 5000):
     while len(participants) >1:
         winners = {}
         for i in range(len(participants)//2):
+            if len(participants)==1:
+                break
             # Choose and remove first agent from participants
             key1 = random.choice(list(participants.keys()))
             a1 = participants.pop(key1)
@@ -35,6 +37,7 @@ def run_tournament(participants,steps = 5000):
     
     
 models = {
+    "bad": PPO,
     "ppo": PPO,
     "a2c": A2C,
     "dqn": DQN,
@@ -45,7 +48,7 @@ models = {
 env = make_vec_env("bonk_game/bonk-v0", n_envs=4)
 agents = load_agents(models)
 num_agents = len(agents)
-assert num_agents in (2,4,8,16)
+assert num_agents > 1
 
 participants = agents.copy()
 winner = run_tournament(participants,steps = 100000)

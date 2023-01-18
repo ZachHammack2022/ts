@@ -12,6 +12,8 @@ from pygame.locals import (
     K_DOWN,
     K_LEFT,
     K_RIGHT,
+    K_SPACE,
+    K_CAPSLOCK,
     K_w,
     K_a,
     K_s, 
@@ -48,7 +50,7 @@ class TestEnv():
         self.top = 135
         self.bottom = 420
         self.r = 20
-        self.force = 0.25 # force players experience on input
+        self.force = 2 # force players experience on input
         
         # Initialize players
         p1_color = (255,102,102)
@@ -74,16 +76,24 @@ class TestEnv():
         self.ceiling = platform(self.left,self.right,self.top-20,self.top,ceiling_color,kill = False)
         self.env_objects = [self.floor,self.left_wall,self.right_wall,self.ceiling]
         
-        # Map action to movement
+        # Map action to movement (x,y,heavy action)
         self._action_to_direction = {
-            0: np.array([1, 0]),
-            1: np.array([0, 1]),
-            2: np.array([-1, 0]),
-            3: np.array([0, -1]),
-            4: np.array([1, 1]),
-            5: np.array([1, -1]),
-            6: np.array([-1, 1]),
-            7: np.array([-1, -1])
+            0: np.array([1, 0,0]),
+            1: np.array([0, 1,0]),
+            2: np.array([-1, 0,0]),
+            3: np.array([0, -1,0]),
+            4: np.array([1, 1,0]),
+            5: np.array([1, -1,0]),
+            6: np.array([-1, 1,0]),
+            7: np.array([-1, -1,1]),
+            8: np.array([1, 0,1]),
+            9: np.array([0, 1,1]),
+            10: np.array([-1, 0,1]),
+            11: np.array([0, -1,1]),
+            12: np.array([1, 1,1]),
+            13: np.array([1, -1,1]),
+            14: np.array([-1, 1,1]),
+            15: np.array([-1, -1,1]),
         }
      
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -101,8 +111,8 @@ class TestEnv():
     
     # need to flip for one of the agents
     def _get_obs(self):
-        a = np.concatenate((self.p1._obs,self.p2._obs),axis = 0)
-        b = np.concatenate((self.p2._obs,self.p1._obs),axis = 0)
+        a = np.concatenate((self.p1.get_obs(),self.p2.get_obs()),axis = 0)
+        b = np.concatenate((self.p2.get_obs(),self.p1.get_obs()),axis = 0)
         return np.concatenate((a,b),axis = 0)
     
     def normalize(self,low,high,val):
@@ -146,28 +156,34 @@ class TestEnv():
         d = self._action_to_direction[x]
         
         # Update agent velocity
-        agent.x_a += d[0]/agent.m
-        agent.y_a += d[1]/agent.m
+        agent.move_right(d[0]*self.force)
+        agent.move_down(d[1]*self.force)
+        if d[2]:
+            agent.make_heavy()
     
     def check_keydown(self,keys,agent):
         if agent == self.p2:
             if keys[pygame.K_LEFT]:
-                agent.x_a -= self.force/agent.m
+                agent.move_left(self.force)
             if keys[pygame.K_RIGHT]:
-                agent.x_a += self.force/agent.m
+                agent.move_right(self.force)
             if keys[pygame.K_UP]:
-                agent.y_a -= self.force/agent.m
+                agent.move_up(self.force)
             if keys[pygame.K_DOWN]:
-                agent.y_a += self.force/agent.m
+                agent.move_down(self.force)
+            if keys[pygame.K_SPACE]:
+                agent.make_heavy()
         else:
             if keys[pygame.K_w]:
-                agent.y_a -= self.force/agent.m
+                agent.move_up(self.force)
             if keys[pygame.K_a]:
-                agent.x_a -= self.force/agent.m
+                agent.move_left(self.force)
             if keys[pygame.K_s]:
-                agent.y_a += self.force/agent.m
+                agent.move_down(self.force)
             if keys[pygame.K_d]:
-                agent.x_a += self.force/agent.m
+                agent.move_right(self.force)
+            if keys[pygame.K_CAPSLOCK]:
+                agent.make_heavy()
                 
     def apply_forces(self,actions):
         # Update velocity for AI agents and users
@@ -223,7 +239,7 @@ class TestEnv():
         self.scores = [self.p1.score,self.p2.score]
        
         # An episode is done if agent or enemy dies
-        high_score = 10
+        high_score = 100
         terminated =  (self.p1.score == high_score or self.p2.score == high_score)
     
             

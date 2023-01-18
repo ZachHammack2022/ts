@@ -127,13 +127,11 @@ def handle_player_collision(a1,a2,d)->None:
     nx = ((cx2-cx1) / d)
     ny = ((cy2-cy1) / d)
     p = 2 * (a1.x_v * nx + a1.y_v * ny - a2.x_v * nx - a2.y_v * ny) / (a1.m + a2.m);
-    a1.x_v = a1.x_v - p * a1.m * nx
-    a1.y_v = a1.y_v - p * a1.m * ny
-    a2.x_v = a2.x_v+ p * a2.m * nx
-    a2.y_v = a2.y_v + p * a2.m * ny
+    a1.x_v = a1.x_v - p * a2.m * nx
+    a1.y_v = a1.y_v - p * a2.m * ny
+    a2.x_v = a2.x_v+ p * a1.m * nx
+    a2.y_v = a2.y_v + p * a1.m * ny
     
-    # set accelerations to 0
-    a1.x_a,a1.y_a,a2.x_a,a2.y_a = 0,0,0,0
     
     
     
