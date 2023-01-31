@@ -9,7 +9,8 @@ To run:
 4. Run "source ./venv/bin/activate"
 5. Run "pip install -r requirements.txt"
 6. Run "pip install -e ." to make the gym environment
-7. Run "python3 main.py". This will train your agents and allow you to begin testing.
-8. Once you have trained your agents, you can run a tournament. Run "python3 tournament.py". This will put your trained agents against one another to find the winner! 
+7. Run "defaults write org.python.python ApplePersistenceIgnoreState NO" if on macOS.
+8. Run "python3 main.py". This will train your agents and allow you to begin testing.
+9. Once you have trained your agents, you can run a tournament. Run "python3 tournament.py". This will put your trained agents against one another to find the winner! 
 
 
