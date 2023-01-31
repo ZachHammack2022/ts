@@ -23,7 +23,7 @@ class MatchEnv():
     
     def simulate(self,steps):
         obs = self.env.reset()
-        for i in range(steps):
+        for _ in range(steps):
             action1, _states = self.agent1.predict(obs[:12])
             action2, _states = self.agent2.predict(obs[12:])
             obs, done, info = self.env.step([action1,action2])
