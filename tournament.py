@@ -13,7 +13,7 @@ import random
 def run_tournament(participants,steps = 5000):
     while len(participants) >1:
         winners = {}
-        for i in range(len(participants)//2):
+        for _ in range(len(participants)//2):
             if len(participants)==1:
                 break
             # Choose and remove first agent from participants
