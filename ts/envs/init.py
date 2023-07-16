@@ -1,0 +1,1 @@
+from ts.envs.training import TsEnv()
