@@ -1,1 +1,1 @@
-from ts.envs.training import TsEnv()
+from ts.envs.training_env import TsEnv

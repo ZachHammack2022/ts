@@ -129,8 +129,8 @@ class Ship():
         Resets ship object.
         """
         
-        self.x = random.randint(10, x) if x==None else x
-        self.y = random.randint(10, y) if y==None else y
+        self.x = random.randint(10, 360) if x==None else x
+        self.y = random.randint(10, 360) if y==None else y
         self.angle = random.randint(0,360) if angle==None else angle
         self.speed = 0 if speed==None else speed
         self.health = self.max_health if health==None else health

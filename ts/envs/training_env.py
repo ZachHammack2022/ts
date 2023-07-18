@@ -14,7 +14,7 @@ from ts.envs.utils.ships.supply_ship import SupplyShip
 class TsEnv(gym.Env):
     
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
-    def __init__(self,render_mode = "human"):
+    def __init__(self,render_mode = None):
         
         # grid limits (680x680 square)
         self.width = 680
@@ -30,12 +30,12 @@ class TsEnv(gym.Env):
         # Initialize ships
         s1_color = (255,102,102)
         s2_color = (0,102,204)
-        self.s1 = SupplyShip(color = s1_color)
+        self.s1 = SupplyShip(color = s1_color,rangee=200)
         numships = random.randint(3, 9)
         self.free_ships = []
         self.ships = [self.s1]
-        for i in range(numships):
-            ship = BattleShip(color=s2_color)
+        for _ in range(numships):
+            ship = BattleShip(color=s1_color)
             self.free_ships.append(ship)
             self.ships.append(ship)
         self.step_count= 0
@@ -45,7 +45,7 @@ class TsEnv(gym.Env):
         
         
         # Define Observation space (up to 10 friendlys, each w coordinates, health, cost, battlepower)
-        self.observation_space = gym.spaces.Box(-1,1,shape = (10,5),dtype = np.float64)
+        self.observation_space = gym.spaces.Box(-1,1,shape = (50,),dtype = np.float64)
         
         # Define Action Space 
         self.action_space = gym.spaces.Discrete(9)
@@ -100,9 +100,9 @@ class TsEnv(gym.Env):
                 ship = self.ships[i]
                 assert isinstance(ship,Ship)
                 x,y = ship.get_coordinates()
-                nx = self.normalize(self.grid.get_x_min,self.grid.get_x_max,x)
-                ny = self.normalize(self.grid.get_y_min,self.grid.get_y_max,y)
-                health = ship.gain_health()
+                nx = self.normalize(self.grid.get_x_min(),self.grid.get_x_max(),x)
+                ny = self.normalize(self.grid.get_y_min(),self.grid.get_y_max(),y)
+                health = ship.get_health()
                 nh = self.normalize(0,500,health)
                 cost = ship.get_cost()
                 nc = self.normalize(0,100,cost)
@@ -115,7 +115,8 @@ class TsEnv(gym.Env):
                 observations.append([0,0,0,0,0])
 
         concatenated_obs = np.concatenate(observations, axis=0)
-        return concatenated_obs
+        flattened_obs = concatenated_obs.flatten()
+        return flattened_obs
     
     def normalize(self,low,high,val):
         return ((val - low)/(high-low)-0.5)*2                
@@ -174,25 +175,35 @@ class TsEnv(gym.Env):
         
         
         # Agent 1 acts no matter what
-        self.make_action(ship=self.p1,action = action1)
+        self.make_action(ship=self.s1,action = action1)
         for ship in self.free_ships:
             ship.move_randomly()
         
+        terminated= True
         for ship in self.ships:
             ship.update()
+            if ship.get_health() > 0:
+                terminated = False
+        
+        for ship in self.free_ships:
+            assert isinstance(ship,Ship)
+            ship.lose_health(0.5)
+            # print(ship.get_health())
+        
 
         self.check_collisions()
         
        
         # An episode is done if agent or enemy dies
-        terminated =  (self.step_count==1000)
-        reward = -0.001
+        reward = -0.01
+        if self.step_count==499:
+            terminated=True
         if terminated:
             for ship in self.free_ships:
                 if isinstance(ship,BattleShip):
                     reward += ((ship.attack()*ship.get_health())!=0)/len(self.free_ships)
                 else:
-                    reward -= 0.1
+                    reward -= 1
         observation = self.get_observations()
 
         if self.render_mode == "human":
