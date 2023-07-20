@@ -27,7 +27,7 @@ def train(models):
             continue
         model = models[key]
         print(f"Training the {key} agent.")
-        model.learn(total_timesteps=500000,progress_bar=True)
+        model.learn(total_timesteps=5000000,progress_bar=True)
         filename = f"./agents/{key}"
         model.save(filename)
 

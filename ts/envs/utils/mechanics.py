@@ -65,21 +65,19 @@ def ship_in_range(s1,s2)->None:
     distance = get_distance(s1,s2)
     d1 = distance + s1.get_radius() -s2.get_radius()
     if (d1 < s1.get_range()):
-        if (s1.color == s2.color and type(s1)== SupplyShip):
-            assert type(s1)==SupplyShip
+        if (s1.color == s2.color and isinstance(s1,SupplyShip)):
             s2.gain_health(s1.refuel())
-        elif(s1.color != s2.color and type(s1)== BattleShip):
-            assert type(s1)==BattleShip
+            s2.set_refueled()
+        elif(s1.color != s2.color and isinstance(s1,BattleShip)):
             s2.lose_health(s1.attack())
         
     
     d2 = distance + s2.get_radius() -s1.get_radius()
     if (d2 < s2.get_range()):
-        if (s1.color == s2.color and type(s2)== SupplyShip):
-            assert type(s2)==SupplyShip
+        if (s1.color == s2.color and isinstance(s2,SupplyShip)):
             s1.gain_health(s2.refuel())
-        elif(s1.color != s2.color and type(s2)== BattleShip):
-            assert type(s2)==BattleShip
+            
+        elif(s1.color != s2.color and isinstance(s2,BattleShip)):
             s1.lose_health(s2.attack())
     
     

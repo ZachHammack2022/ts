@@ -31,7 +31,6 @@ def run_test(model,env,steps):
     for i in range(steps):
         action, _states = model.predict(obs)
         obs,reward, done, info = env.step(action)
-        print(i,": ",reward)
         if done:
             break
     env.close()    

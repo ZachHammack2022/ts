@@ -30,7 +30,7 @@ class TsEnv(gym.Env):
         # Initialize ships
         s1_color = (255,102,102)
         s2_color = (0,102,204)
-        self.s1 = SupplyShip(color = s1_color,rangee=200)
+        self.s1 = SupplyShip(color = s1_color)
         numships = random.randint(3, 9)
         self.free_ships = []
         self.ships = [self.s1]
@@ -176,11 +176,18 @@ class TsEnv(gym.Env):
         
         # Agent 1 acts no matter what
         self.make_action(ship=self.s1,action = action1)
-        for ship in self.free_ships:
-            ship.move_randomly()
+        # for ship in self.free_ships:
+        #     ship.move_randomly()
+        
+        for ship in self.ships:
+            ship.set_not_refueled()
+            
+        self.check_collisions()
         
         terminated= True
         for ship in self.ships:
+            if ship.get_health()<=0:
+                continue
             ship.update()
             if ship.get_health() > 0:
                 terminated = False
@@ -190,12 +197,11 @@ class TsEnv(gym.Env):
             ship.lose_health(0.5)
             # print(ship.get_health())
         
-
-        self.check_collisions()
         
        
         # An episode is done if agent or enemy dies
         reward = -0.01
+        self.step_count +=1
         if self.step_count==499:
             terminated=True
         if terminated:
@@ -209,6 +215,7 @@ class TsEnv(gym.Env):
         if self.render_mode == "human":
             self._render_frame()
         info = {}
+        
         
         return observation, reward, terminated, info
     
@@ -227,8 +234,8 @@ class TsEnv(gym.Env):
             self.clock = pygame.time.Clock()
 
         canvas = pygame.Surface((self.width, self.height))
-        canvas.fill((205, 240, 255))
-        
+        # canvas.fill((205, 240, 255))
+        canvas.fill((255, 255, 255))
         
         # Render agents
         for agent in self.ships:

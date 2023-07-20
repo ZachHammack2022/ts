@@ -25,8 +25,12 @@ class Ship():
         self.health = self.max_health if health is None else health
         self.max_speed = 5 if max_speed is None else max_speed
         self.cost=10 if cost is None else cost
-        self.range=10 if rangee is None else rangee
+        self.range=20 if rangee is None else rangee
         self.image=image
+        self.being_refueled = False
+        self.being_attacked = False
+        self.refueled_color = (40,40,40)
+        self.attacked_color = (0,100,100)
         
     
     def get_coordinates(self):
@@ -103,6 +107,15 @@ class Ship():
         self.health += health
         self.health = min(self.health,self.max_health)
     
+    def set_attacked(self):
+        self.being_attacked = True
+    
+    def set_refueled(self):
+        self.being_refueled = True
+    
+    def set_not_refueled(self):
+        self.being_refueled = False
+    
     def load_icon(self,path,width=None,height=None):
          # Load the PNG image
         image = pygame.image.load(path)
@@ -120,10 +133,13 @@ class Ship():
             if (self.health > 0 ):
                 if self.image:
                      canvas.blit(self.image, (self.x, self.y))
+                elif self.being_refueled:
+                    pygame.draw.circle(canvas, self.refueled_color, [self.x,self.y], 5)
+                elif self.being_attacked:
+                    pygame.draw.circle(canvas, self.attacked_color, [self.x,self.y], 5)
                 else:
                     pygame.draw.circle(canvas, self.color, [self.x,self.y], 5)
 
-    
     def reset(self,x=None,y=None,speed=None,health=None,angle=None) -> None:
         """ 
         Resets ship object.
